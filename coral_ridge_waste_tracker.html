@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waste Log — Coral Ridge 2225</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f4;color:#1a1a19;min-height:100vh}
+.app{max-width:680px;margin:0 auto;background:#fff;min-height:100vh;display:flex;flex-direction:column}
+.header{padding:16px;border-bottom:1px solid #e5e5e3;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;position:sticky;top:0;z-index:10}
+.header h1{font-size:20px;font-weight:600;color:#1a1a19}
+.header .date{font-size:13px;color:#6b6b68;margin-top:2px}
+.btn-ghost{padding:8px 14px;background:transparent;color:#6b6b68;border:1px solid #d4d4d0;border-radius:8px;font-size:14px;cursor:pointer}
+.search-bar{padding:12px 16px;border-bottom:1px solid #e5e5e3;background:#fff;position:sticky;top:69px;z-index:9}
+.search-bar input{width:100%;padding:9px 12px;font-size:15px;border:1px solid #d4d4d0;border-radius:8px;background:#f5f5f4;color:#1a1a19;outline:none}
+.search-bar input:focus{border-color:#888}
+.cat-filter{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid #e5e5e3;background:#fff;position:sticky;top:118px;z-index:8;scrollbar-width:none}
+.cat-filter::-webkit-scrollbar{display:none}
+.cat-btn{flex-shrink:0;padding:5px 13px;font-size:12px;border:1px solid #d4d4d0;border-radius:20px;background:#fff;color:#6b6b68;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.cat-btn.active{border-color:#1a1a19;color:#1a1a19;font-weight:600}
+.items-list{padding:8px 16px;display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto}
+.item-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid #e5e5e3;border-radius:10px;background:#fff;transition:border-color 0.15s,background 0.15s}
+.item-row.has-waste{border-color:#185FA5;background:#e6f1fb}
+.item-name{font-size:14px;color:#1a1a19;line-height:1.3}
+.item-cat{font-size:11px;color:#6b6b68;margin-top:1px}
+.qty-ctrl{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qty-btn{width:32px;height:32px;border:1px solid #d4d4d0;border-radius:8px;background:#f5f5f4;color:#1a1a19;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none}
+.qty-btn:active{background:#e5e5e3;transform:scale(0.94)}
+.qty-val{width:28px;text-align:center;font-size:15px;font-weight:600;color:#1a1a19}
+.qty-unit{font-size:11px;color:#6b6b68;min-width:30px}
+.footer{padding:12px 16px;border-top:1px solid #e5e5e3;display:flex;gap:8px;align-items:center;background:#fff;position:sticky;bottom:0}
+.summary-pill{font-size:13px;color:#6b6b68;flex:1}
+.summary-pill span{font-weight:600;color:#1a1a19}
+.btn-primary{padding:10px 20px;background:#1a1a19;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.btn-primary:active{opacity:0.8}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;z-index:100}
+.modal{background:#fff;width:100%;max-width:680px;border-radius:16px 16px 0 0;padding:20px 20px 36px;max-height:80vh;overflow-y:auto}
+.modal h2{font-size:17px;font-weight:600;margin-bottom:3px}
+.modal .sub{font-size:13px;color:#6b6b68;margin-bottom:16px}
+.cat-label{font-size:11px;font-weight:600;color:#6b6b68;text-transform:uppercase;letter-spacing:0.05em;padding:10px 0 4px}
+.report-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e5e5e3;font-size:14px}
+.report-row:last-child{border-bottom:none}
+.rqty{font-weight:600;white-space:nowrap}
+.runit{font-size:12px;color:#6b6b68;margin-left:3px;font-weight:400}
+.empty{text-align:center;padding:32px 16px;color:#6b6b68;font-size:14px}
+.modal-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.copy-area{background:#f5f5f4;border-radius:8px;padding:12px;font-size:13px;font-family:monospace;white-space:pre-wrap;color:#1a1a19;margin-top:12px;line-height:1.6;max-height:200px;overflow-y:auto}
+.copied{background:#0F6E56!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Waste log</h1>
+      <div class="date" id="dateLabel"></div>
+    </div>
+    <button class="btn-ghost" id="clearBtn">Reset</button>
+  </div>
+  <div class="search-bar">
+    <input type="search" id="searchInput" placeholder="Search items..." autocomplete="off" />
+  </div>
+  <div class="cat-filter" id="catFilter"></div>
+  <div class="items-list" id="itemsList"></div>
+  <div class="footer">
+    <div class="summary-pill">Wasted: <span id="itemCount">0</span> types &nbsp;·&nbsp; <span id="unitCount">0</span> units</div>
+    <button class="btn-primary" id="reportBtn">View report</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" style="display:none">
+  <div class="modal">
+    <h2>Waste report</h2>
+    <div class="sub" id="reportSub"></div>
+    <div id="reportList"></div>
+    <div class="copy-area" id="copyArea" style="display:none"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" id="copyBtn">Copy for Rosnet</button>
+      <button class="btn-ghost" id="closeModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ITEMS=[
+  {id:'beer1',name:'Blue Moon',cat:'Beer',unit:'Can'},
+  {id:'beer2',name:'Bud Light',cat:'Beer',unit:'Can'},
+  {id:'beer3',name:'Coors Light',cat:'Beer',unit:'Can'},
+  {id:'beer4',name:'Guinness',cat:'Beer',unit:'Can'},
+  {id:'beer5',name:'Heineken',cat:'Beer',unit:'Can'},
+  {id:'beer6',name:'Michelob Ultra',cat:'Beer',unit:'Can'},
+  {id:'beer7',name:'Miller Lite',cat:'Beer',unit:'Can'},
+  {id:'beer8',name:'Truly Spiked Wildberry',cat:'Beer',unit:'Can'},
+  {id:'wine1',name:'Dark Horse Pinot Grigio 375ml',cat:'Wine',unit:'Can'},
+  {id:'wine2',name:'Dark Horse Pinot Noir 375ml',cat:'Wine',unit:'Can'},
+  {id:'wine3',name:'Dark Horse Rosé 375ml',cat:'Wine',unit:'Can'},
+  {id:'wine4',name:'Dark Horse Sauv Blanc 375ml',cat:'Wine',unit:'Can'},
+  {id:'soda1',name:'Soda BIB (all flavors)',cat:'Fountain Soda',unit:'3 Gal'},
+  {id:'soda2',name:'Soda BIB (all flavors)',cat:'Fountain Soda',unit:'5 Gal'},
+  {id:'sodapk1',name:'Cup 14oz Kids Paper',cat:'Fountain Soda',unit:'Each'},
+  {id:'sodapk2',name:'Cup 20oz Marcus Paper',cat:'Fountain Soda',unit:'Each'},
+  {id:'sodapk3',name:'Cup 32oz Marcus Paper',cat:'Fountain Soda',unit:'Each'},
+  {id:'sodapk4',name:'Cup 44oz Marcus Paper',cat:'Fountain Soda',unit:'Each'},
+  {id:'pop1',name:'Caramel Corn bag',cat:'Popcorn',unit:'Each'},
+  {id:'pop2',name:'Coconut oil',cat:'Popcorn',unit:'35 LB'},
+  {id:'pop3',name:'Butter flavored salt',cat:'Popcorn',unit:'35 oz'},
+  {id:'pop4',name:'Kettle corn seasoning 0.9oz',cat:'Popcorn',unit:'Each'},
+  {id:'pop5',name:'Nacho cheddar seasoning 0.9oz',cat:'Popcorn',unit:'Each'},
+  {id:'pop6',name:'Ranch seasoning 0.9oz',cat:'Popcorn',unit:'Each'},
+  {id:'pop7',name:'White cheddar seasoning 0.9oz',cat:'Popcorn',unit:'Each'},
+  {id:'pop8',name:'Popcorn seed',cat:'Popcorn',unit:'35 LB'},
+  {id:'pop9',name:'Buttery topping',cat:'Popcorn',unit:'35 LB'},
+  {id:'poppk1',name:'Bag 64oz paper',cat:'Popcorn Pkg',unit:'Bag'},
+  {id:'poppk2',name:'Kids tray',cat:'Popcorn Pkg',unit:'Tray'},
+  {id:'poppk3',name:'Tub 170oz Marcus paper',cat:'Popcorn Pkg',unit:'Tub'},
+  {id:'poppk4',name:'Tub 44oz all prints',cat:'Popcorn Pkg',unit:'Each'},
+  {id:'poppk5',name:'Tub 85oz Marcus paper',cat:'Popcorn Pkg',unit:'Tub'},
+  {id:'poppk6',name:'Tub 170oz Marcus plastic',cat:'Popcorn Pkg',unit:'Each'},
+  {id:'can1',name:'Airhead Extreme Bites',cat:'Candy',unit:'Each'},
+  {id:'can2',name:'Airheads Soft Bites',cat:'Candy',unit:'Each'},
+  {id:'can3',name:'Buncha Crunch',cat:'Candy',unit:'Each'},
+  {id:'can4',name:'Chewy SweeTarts Mini',cat:'Candy',unit:'Each'},
+  {id:'can5',name:'Cookie Dough Bites',cat:'Candy',unit:'Each'},
+  {id:'can6',name:'Cookie Dough Bites LTO',cat:'Candy',unit:'Each'},
+  {id:'can7',name:'Dots',cat:'Candy',unit:'Each'},
+  {id:'can8',name:'Gummies Skittles',cat:'Candy',unit:'Each'},
+  {id:'can9',name:'Haribo Gummi Bears',cat:'Candy',unit:'Each'},
+  {id:'can10',name:'Juicefuls',cat:'Candy',unit:'Each'},
+  {id:'can11',name:'Junior Mints',cat:'Candy',unit:'Each'},
+  {id:'can12',name:'Lifesaver Gummies',cat:'Candy',unit:'Each'},
+  {id:'can13',name:"M&M Peanut",cat:'Candy',unit:'Each'},
+  {id:'can14',name:"M&M Plain",cat:'Candy',unit:'Each'},
+  {id:'can15',name:'Milk Duds',cat:'Candy',unit:'Each'},
+  {id:'can16',name:'Nerd Gummi Cluster',cat:'Candy',unit:'Each'},
+  {id:'can17',name:'Nerd Gummi Very Berry Cluster',cat:'Candy',unit:'Each'},
+  {id:'can18',name:"Reese's Peanut Butter Cups",cat:'Candy',unit:'Each'},
+  {id:'can19',name:'Reeses Animal Dipped',cat:'Candy',unit:'Each'},
+  {id:'can20',name:'Reeses Pieces',cat:'Candy',unit:'Each'},
+  {id:'can21',name:'Skittles',cat:'Candy',unit:'Each'},
+  {id:'can22',name:'Skittles Sour',cat:'Candy',unit:'Each'},
+  {id:'can23',name:'Sour Jacks 5oz',cat:'Candy',unit:'Each'},
+  {id:'can24',name:'Sour Patch Kids',cat:'Candy',unit:'Each'},
+  {id:'can25',name:'SunMaid Chocolate Raisins',cat:'Candy',unit:'Each'},
+  {id:'can26',name:'SweeTart Ropes',cat:'Candy',unit:'Each'},
+  {id:'can27',name:'Trolli Sour Crawlers',cat:'Candy',unit:'Each'},
+  {id:'can28',name:'Tuxedo Almonds',cat:'Candy',unit:'Each'},
+  {id:'can29',name:'Twizzlers',cat:'Candy',unit:'Each'},
+  {id:'can30',name:'Cotton candy/sugar',cat:'Candy',unit:'Case'},
+  {id:'can31',name:'Oreos Mini',cat:'Candy',unit:'Each'},
+  {id:'can32',name:"Welch's Fruit Bag 0.9oz",cat:'Candy',unit:'Each'},
+  {id:'can33',name:"Welch's Fruit Peg 5oz",cat:'Candy',unit:'Each'},
+  {id:'icee1',name:'ICEE/FCB syrup (all flavors)',cat:'ICEE',unit:'3 Gal'},
+  {id:'iceepk1',name:'Cup 24oz Marcus ICEE FCB',cat:'ICEE',unit:'Each'},
+  {id:'iceepk2',name:'Cup 32oz Marcus ICEE FCB',cat:'ICEE',unit:'Each'},
+  {id:'ff1',name:'Brownie Bites',cat:'Food',unit:'Each'},
+  {id:'ff2',name:'Doritos',cat:'Food',unit:'Each'},
+  {id:'ff3',name:'Flamin Hot Cheetos',cat:'Food',unit:'Each'},
+  {id:'ff4',name:'Flamin Hot Doritos',cat:'Food',unit:'Each'},
+  {id:'ff5',name:'Hot Fries',cat:'Food',unit:'Each'},
+  {id:'ff6',name:'Regular Cheetos',cat:'Food',unit:'Each'},
+  {id:'ff7',name:'Dinamita Rolled Chips',cat:'Food',unit:'Each'},
+  {id:'ff8',name:'BBQ Potato chips (single)',cat:'Food',unit:'Each'},
+  {id:'ff9',name:'Limon Potato chips (single)',cat:'Food',unit:'Each'},
+  {id:'ff10',name:'Regular XVL Potato chips (single)',cat:'Food',unit:'Each'},
+  {id:'ff11',name:'Churro Bites',cat:'Food',unit:'Each'},
+  {id:'ff12',name:'Icing cup 2oz',cat:'Food',unit:'Each'},
+  {id:'hd1',name:'Hot dog bun',cat:'Hot Dogs',unit:'Each'},
+  {id:'hd2',name:'Hot dog 1/4lb beef vend',cat:'Hot Dogs',unit:'Each'},
+  {id:'hd3',name:'Hot dog regular',cat:'Hot Dogs',unit:'Each'},
+  {id:'nacho1',name:'Tortilla chips single serve',cat:'Nachos',unit:'Each'},
+  {id:'nacho2',name:'Nacho cheese theater sauce',cat:'Nachos',unit:'140 oz'},
+  {id:'nacho3',name:'Jalapeno peppers theater',cat:'Nachos',unit:'Gallon'},
+  {id:'nacho4',name:'Nacho tray 4oz plastic 2-comp',cat:'Nachos',unit:'Tray'},
+  {id:'pret1',name:'Pretzel Bites soft',cat:'Pretzels',unit:'Each'},
+  {id:'ic1',name:'Haagen-Dazs Almond Crunch bar',cat:'Ice Cream',unit:'Each'},
+  {id:'ic2',name:'Ice Cream Dibs',cat:'Ice Cream',unit:'Each'},
+  {id:'ic3',name:'Tollhouse Cookie Ice Cream Sandwich',cat:'Ice Cream',unit:'Each'},
+  {id:'ic4',name:'Dippin Dots prepack',cat:'Ice Cream',unit:'Each'},
+  {id:'nc1',name:'Pure Leaf Tea',cat:'Drinks',unit:'Bottle'},
+  {id:'nc2',name:'Celsius (all varieties)',cat:'Drinks',unit:'Can'},
+  {id:'nc3',name:'Rockstar (all varieties)',cat:'Drinks',unit:'Can'},
+  {id:'w1',name:'Aquafina 20oz',cat:'Drinks',unit:'Bottle'},
+  {id:'w2',name:'Aquafina Liter',cat:'Drinks',unit:'Bottle'},
+  {id:'w3',name:'LifeWtr',cat:'Drinks',unit:'Bottle'},
+  {id:'w4',name:'Bubly sparkling water',cat:'Drinks',unit:'Can'},
+  {id:'coffee1',name:'K-Cup coffee',cat:'Coffee',unit:'Each'},
+  {id:'coffee2',name:'K-Cup coffee decaf',cat:'Coffee',unit:'Each'},
+  {id:'coffpk1',name:'Cup 12oz hot',cat:'Coffee',unit:'Each'},
+  {id:'g1',name:'Gatorade',cat:'Drinks',unit:'Bottle'},
+  {id:'merch1',name:'Movie blanket',cat:'Merchandise',unit:'Each'},
+  {id:'merch2',name:'Mando bottle 32oz',cat:'Merchandise',unit:'Each'},
+  {id:'merch3',name:'MG water bottle',cat:'Merchandise',unit:'Each'},
+  {id:'merch4',name:'MOTU Gripper cup',cat:'Merchandise',unit:'Each'},
+  {id:'merch5',name:'MOTU Sword cup',cat:'Merchandise',unit:'Each'},
+  {id:'merch6',name:'Minions plush',cat:'Merchandise',unit:'Each'},
+  {id:'merch7',name:'Poppy plush',cat:'Merchandise',unit:'Each'},
+  {id:'merch8',name:'Battle Cat bag tag',cat:'Merchandise',unit:'Each'},
+  {id:'merch9',name:'AT-AT bucket',cat:'Merchandise',unit:'Each'},
+  {id:'merch10',name:'Grogu tin',cat:'Merchandise',unit:'Each'},
+  {id:'merch11',name:'MG tin 230oz',cat:'Merchandise',unit:'Each'},
+  {id:'merch12',name:'Minions 130oz tin',cat:'Merchandise',unit:'Each'},
+  {id:'merch13',name:'SG silhouette vessel',cat:'Merchandise',unit:'Each'},
+  {id:'merch14',name:'Top Gun helmet',cat:'Merchandise',unit:'Each'},
+  {id:'merch15',name:'MOTU Castle Grayskull',cat:'Merchandise',unit:'Each'},
+];
+
+const waste={};
+let activeCategory='All';
+let searchQuery='';
+const cats=['All',...new Set(ITEMS.map(i=>i.cat))];
+
+function dateStr(){
+  return new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+}
+document.getElementById('dateLabel').textContent=dateStr();
+
+const catFilter=document.getElementById('catFilter');
+cats.forEach(c=>{
+  const btn=document.createElement('button');
+  btn.className='cat-btn'+(c==='All'?' active':'');
+  btn.textContent=c;
+  btn.onclick=()=>{
+    activeCategory=c;
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  };
+  catFilter.appendChild(btn);
+});
+
+document.getElementById('searchInput').addEventListener('input',e=>{
+  searchQuery=e.target.value.toLowerCase();
+  render();
+});
+
+function render(){
+  const list=document.getElementById('itemsList');
+  list.innerHTML='';
+  const filtered=ITEMS.filter(item=>{
+    const catOk=activeCategory==='All'||item.cat===activeCategory;
+    const searchOk=!searchQuery||item.name.toLowerCase().includes(searchQuery)||item.cat.toLowerCase().includes(searchQuery);
+    return catOk&&searchOk;
+  });
+  if(filtered.length===0){
+    list.innerHTML='<div class="empty">No items found</div>';
+    return;
+  }
+  filtered.forEach(item=>{
+    const qty=waste[item.id]||0;
+    const row=document.createElement('div');
+    row.className='item-row'+(qty>0?' has-waste':'');
+    row.innerHTML=`
+      <div style="flex:1;min-width:0">
+        <div class="item-name">${item.name}</div>
+        <div class="item-cat">${item.cat}</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" data-id="${item.id}" data-dir="-1">−</button>
+        <div class="qty-val">${qty}</div>
+        <button class="qty-btn" data-id="${item.id}" data-dir="1">+</button>
+        <div class="qty-unit">${item.unit}</div>
+      </div>`;
+    list.appendChild(row);
+  });
+  updateSummary();
+}
+
+document.getElementById('itemsList').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-dir]');
+  if(!btn)return;
+  const id=btn.dataset.id;
+  const dir=parseInt(btn.dataset.dir);
+  waste[id]=Math.max(0,(waste[id]||0)+dir);
+  render();
+});
+
+function updateSummary(){
+  const w=Object.entries(waste).filter(([,v])=>v>0);
+  document.getElementById('itemCount').textContent=w.length;
+  document.getElementById('unitCount').textContent=w.reduce((s,[,v])=>s+v,0);
+}
+
+document.getElementById('clearBtn').onclick=()=>{
+  if(confirm('Reset all waste counts?')){
+    Object.keys(waste).forEach(k=>waste[k]=0);
+    render();
+  }
+};
+
+document.getElementById('reportBtn').onclick=()=>{
+  const wasted=Object.entries(waste).filter(([,v])=>v>0).map(([id,qty])=>({...ITEMS.find(i=>i.id===id),qty}));
+  const reportList=document.getElementById('reportList');
+  const copyArea=document.getElementById('copyArea');
+  reportList.innerHTML='';
+  copyArea.style.display='none';
+  document.getElementById('reportSub').textContent=`${dateStr()} — ${wasted.length} item type(s) wasted`;
+  if(wasted.length===0){
+    reportList.innerHTML='<div class="empty">No waste logged yet.</div>';
+  } else {
+    const byCat={};
+    wasted.forEach(i=>{if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+    Object.entries(byCat).forEach(([cat,items])=>{
+      const h=document.createElement('div');
+      h.className='cat-label';
+      h.textContent=cat;
+      reportList.appendChild(h);
+      items.forEach(item=>{
+        const row=document.createElement('div');
+        row.className='report-row';
+        row.innerHTML=`<span>${item.name}</span><span class="rqty">${item.qty}<span class="runit">${item.unit}</span></span>`;
+        reportList.appendChild(row);
+      });
+    });
+  }
+  document.getElementById('modalBg').style.display='flex';
+};
+
+document.getElementById('copyBtn').onclick=()=>{
+  const wasted=Object.entries(waste).filter(([,v])=>v>0).map(([id,qty])=>({...ITEMS.find(i=>i.id===id),qty}));
+  if(wasted.length===0)return;
+  let txt=`WASTE LOG — Coral Ridge Cinema 2225\n${dateStr()}\n${'─'.repeat(40)}\n`;
+  const byCat={};
+  wasted.forEach(i=>{if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
+  Object.entries(byCat).forEach(([cat,items])=>{
+    txt+=`\n[${cat}]\n`;
+    items.forEach(i=>{txt+=`  ${i.name}: ${i.qty} ${i.unit}\n`;});
+  });
+  txt+=`\nTotal units wasted: ${wasted.reduce((s,i)=>s+i.qty,0)}`;
+  const area=document.getElementById('copyArea');
+  area.textContent=txt;
+  area.style.display='block';
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  const btn=document.getElementById('copyBtn');
+  btn.textContent='Copied!';
+  btn.classList.add('copied');
+  setTimeout(()=>{btn.textContent='Copy for Rosnet';btn.classList.remove('copied');},2000);
+};
+
+document.getElementById('closeModal').onclick=()=>{
+  document.getElementById('modalBg').style.display='none';
+};
+
+render();
+</script>
+</body>
+</html>
