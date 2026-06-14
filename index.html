@@ -11,6 +11,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header{padding:16px;border-bottom:1px solid #e5e5e3;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;position:sticky;top:0;z-index:10}
 .header h1{font-size:20px;font-weight:600;color:#1a1a19}
 .header .date{font-size:13px;color:#6b6b68;margin-top:2px}
+.header-right{display:flex;gap:8px;align-items:center}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0;transition:background 0.3s}
+.sync-dot.synced{background:#1D9E75}
+.sync-dot.syncing{background:#EF9F27}
+.sync-dot.error{background:#E24B4A}
 .btn-ghost{padding:8px 14px;background:transparent;color:#6b6b68;border:1px solid #d4d4d0;border-radius:8px;font-size:14px;cursor:pointer}
 .search-bar{padding:12px 16px;border-bottom:1px solid #e5e5e3;background:#fff;position:sticky;top:69px;z-index:9}
 .search-bar input{width:100%;padding:9px 12px;font-size:15px;border:1px solid #d4d4d0;border-radius:8px;background:#f5f5f4;color:#1a1a19;outline:none}
@@ -19,7 +24,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cat-filter::-webkit-scrollbar{display:none}
 .cat-btn{flex-shrink:0;padding:5px 13px;font-size:12px;border:1px solid #d4d4d0;border-radius:20px;background:#fff;color:#6b6b68;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .cat-btn.active{border-color:#1a1a19;color:#1a1a19;font-weight:600}
-.items-list{padding:8px 16px;display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto}
+.items-list{padding:8px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
 .item-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid #e5e5e3;border-radius:10px;background:#fff;transition:border-color 0.15s,background 0.15s}
 .item-row.has-waste{border-color:#185FA5;background:#e6f1fb}
 .item-name{font-size:14px;color:#1a1a19;line-height:1.3}
@@ -46,7 +51,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .empty{text-align:center;padding:32px 16px;color:#6b6b68;font-size:14px}
 .modal-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .copy-area{background:#f5f5f4;border-radius:8px;padding:12px;font-size:13px;font-family:monospace;white-space:pre-wrap;color:#1a1a19;margin-top:12px;line-height:1.6;max-height:200px;overflow-y:auto}
-.copied{background:#0F6E56!important}
+.loading{text-align:center;padding:48px 16px;color:#6b6b68;font-size:14px}
+.reset-confirm{background:#fff;border-radius:16px 16px 0 0;padding:20px 20px 36px}
+.reset-confirm h2{font-size:17px;font-weight:600;margin-bottom:8px}
+.reset-confirm p{font-size:14px;color:#6b6b68;margin-bottom:16px}
+.btn-danger{padding:10px 20px;background:#A32D2D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
 </style>
 </head>
 <body>
@@ -56,13 +65,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <h1>Waste log</h1>
       <div class="date" id="dateLabel"></div>
     </div>
-    <button class="btn-ghost" id="clearBtn">Reset</button>
+    <div class="header-right">
+      <div class="sync-dot" id="syncDot" title="Sync status"></div>
+    </div>
   </div>
   <div class="search-bar">
     <input type="search" id="searchInput" placeholder="Search items..." autocomplete="off" />
   </div>
   <div class="cat-filter" id="catFilter"></div>
-  <div class="items-list" id="itemsList"></div>
+  <div class="items-list" id="itemsList"><div class="loading">Connecting to database…</div></div>
   <div class="footer">
     <div class="summary-pill">Wasted: <span id="itemCount">0</span> types &nbsp;·&nbsp; <span id="unitCount">0</span> units</div>
     <button class="btn-primary" id="reportBtn">View report</button>
@@ -82,8 +93,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<script>
-const ITEMS=[
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBzCcM4XaV_F3NJ3wi04WDBx-3FH2iWDkI",
+  authDomain: "coral-ridge-cinema-waste.firebaseapp.com",
+  databaseURL: "https://coral-ridge-cinema-waste-default-rtdb.firebaseio.com",
+  projectId: "coral-ridge-cinema-waste",
+  storageBucket: "coral-ridge-cinema-waste.firebasestorage.app",
+  messagingSenderId: "814556841541",
+  appId: "1:814556841541:web:24fc025949f143708c052c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const ITEMS = [
   {id:'beer1',name:'Blue Moon',cat:'Beer',unit:'Can'},
   {id:'beer2',name:'Bud Light',cat:'Beer',unit:'Can'},
   {id:'beer3',name:'Coors Light',cat:'Beer',unit:'Can'},
@@ -205,52 +234,83 @@ const ITEMS=[
   {id:'merch15',name:'MOTU Castle Grayskull',cat:'Merchandise',unit:'Each'},
 ];
 
-const waste={};
-let activeCategory='All';
-let searchQuery='';
-const cats=['All',...new Set(ITEMS.map(i=>i.cat))];
+const cats = ['All', ...new Set(ITEMS.map(i => i.cat))];
+let waste = {};
+let activeCategory = 'All';
+let searchQuery = '';
+let loaded = false;
 
-function dateStr(){
-  return new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+const syncDot = document.getElementById('syncDot');
+function setSyncStatus(status) {
+  syncDot.className = 'sync-dot ' + status;
 }
-document.getElementById('dateLabel').textContent=dateStr();
 
-const catFilter=document.getElementById('catFilter');
-cats.forEach(c=>{
-  const btn=document.createElement('button');
-  btn.className='cat-btn'+(c==='All'?' active':'');
-  btn.textContent=c;
-  btn.onclick=()=>{
-    activeCategory=c;
-    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
+function todayKey() {
+  const d = new Date();
+  return `waste_${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}_${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dateStr() {
+  return new Date().toLocaleDateString('en-US', {weekday:'short',month:'short',day:'numeric',year:'numeric'});
+}
+document.getElementById('dateLabel').textContent = dateStr();
+
+const dbRef = ref(db, todayKey());
+
+onValue(dbRef, (snapshot) => {
+  waste = snapshot.val() || {};
+  if (!loaded) {
+    loaded = true;
+    buildCatFilter();
     render();
-  };
-  catFilter.appendChild(btn);
+  } else {
+    render();
+  }
+  setSyncStatus('synced');
+}, (error) => {
+  setSyncStatus('error');
+  console.error(error);
 });
 
-document.getElementById('searchInput').addEventListener('input',e=>{
-  searchQuery=e.target.value.toLowerCase();
+function buildCatFilter() {
+  const catFilter = document.getElementById('catFilter');
+  catFilter.innerHTML = '';
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (c === 'All' ? ' active' : '');
+    btn.textContent = c;
+    btn.onclick = () => {
+      activeCategory = c;
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    };
+    catFilter.appendChild(btn);
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value.toLowerCase();
   render();
 });
 
-function render(){
-  const list=document.getElementById('itemsList');
-  list.innerHTML='';
-  const filtered=ITEMS.filter(item=>{
-    const catOk=activeCategory==='All'||item.cat===activeCategory;
-    const searchOk=!searchQuery||item.name.toLowerCase().includes(searchQuery)||item.cat.toLowerCase().includes(searchQuery);
-    return catOk&&searchOk;
+function render() {
+  const list = document.getElementById('itemsList');
+  list.innerHTML = '';
+  const filtered = ITEMS.filter(item => {
+    const catOk = activeCategory === 'All' || item.cat === activeCategory;
+    const searchOk = !searchQuery || item.name.toLowerCase().includes(searchQuery) || item.cat.toLowerCase().includes(searchQuery);
+    return catOk && searchOk;
   });
-  if(filtered.length===0){
-    list.innerHTML='<div class="empty">No items found</div>';
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">No items found</div>';
     return;
   }
-  filtered.forEach(item=>{
-    const qty=waste[item.id]||0;
-    const row=document.createElement('div');
-    row.className='item-row'+(qty>0?' has-waste':'');
-    row.innerHTML=`
+  filtered.forEach(item => {
+    const qty = waste[item.id] || 0;
+    const row = document.createElement('div');
+    row.className = 'item-row' + (qty > 0 ? ' has-waste' : '');
+    row.innerHTML = `
       <div style="flex:1;min-width:0">
         <div class="item-name">${item.name}</div>
         <div class="item-cat">${item.cat}</div>
@@ -266,82 +326,77 @@ function render(){
   updateSummary();
 }
 
-document.getElementById('itemsList').addEventListener('click',e=>{
-  const btn=e.target.closest('[data-dir]');
-  if(!btn)return;
-  const id=btn.dataset.id;
-  const dir=parseInt(btn.dataset.dir);
-  waste[id]=Math.max(0,(waste[id]||0)+dir);
-  render();
+document.getElementById('itemsList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-dir]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const dir = parseInt(btn.dataset.dir);
+  const newVal = Math.max(0, (waste[id] || 0) + dir);
+  setSyncStatus('syncing');
+  const updateObj = {};
+  updateObj[id] = newVal === 0 ? null : newVal;
+  update(dbRef, updateObj).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
 });
 
-function updateSummary(){
-  const w=Object.entries(waste).filter(([,v])=>v>0);
-  document.getElementById('itemCount').textContent=w.length;
-  document.getElementById('unitCount').textContent=w.reduce((s,[,v])=>s+v,0);
+function updateSummary() {
+  const w = Object.entries(waste).filter(([,v]) => v > 0);
+  document.getElementById('itemCount').textContent = w.length;
+  document.getElementById('unitCount').textContent = w.reduce((s,[,v]) => s+v, 0);
 }
 
-document.getElementById('clearBtn').onclick=()=>{
-  if(confirm('Reset all waste counts?')){
-    Object.keys(waste).forEach(k=>waste[k]=0);
-    render();
-  }
-};
 
-document.getElementById('reportBtn').onclick=()=>{
-  const wasted=Object.entries(waste).filter(([,v])=>v>0).map(([id,qty])=>({...ITEMS.find(i=>i.id===id),qty}));
-  const reportList=document.getElementById('reportList');
-  const copyArea=document.getElementById('copyArea');
-  reportList.innerHTML='';
-  copyArea.style.display='none';
-  document.getElementById('reportSub').textContent=`${dateStr()} — ${wasted.length} item type(s) wasted`;
-  if(wasted.length===0){
-    reportList.innerHTML='<div class="empty">No waste logged yet.</div>';
+
+document.getElementById('reportBtn').onclick = () => {
+  const wasted = Object.entries(waste).filter(([,v]) => v > 0).map(([id,qty]) => ({...ITEMS.find(i => i.id===id), qty})).filter(i => i.name);
+  const reportList = document.getElementById('reportList');
+  const copyArea = document.getElementById('copyArea');
+  reportList.innerHTML = '';
+  copyArea.style.display = 'none';
+  document.getElementById('reportSub').textContent = `${dateStr()} — ${wasted.length} item type(s) wasted`;
+  if (wasted.length === 0) {
+    reportList.innerHTML = '<div class="empty">No waste logged yet.</div>';
   } else {
-    const byCat={};
-    wasted.forEach(i=>{if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
-    Object.entries(byCat).forEach(([cat,items])=>{
-      const h=document.createElement('div');
-      h.className='cat-label';
-      h.textContent=cat;
+    const byCat = {};
+    wasted.forEach(i => { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
+    Object.entries(byCat).forEach(([cat, items]) => {
+      const h = document.createElement('div');
+      h.className = 'cat-label';
+      h.textContent = cat;
       reportList.appendChild(h);
-      items.forEach(item=>{
-        const row=document.createElement('div');
-        row.className='report-row';
-        row.innerHTML=`<span>${item.name}</span><span class="rqty">${item.qty}<span class="runit">${item.unit}</span></span>`;
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'report-row';
+        row.innerHTML = `<span>${item.name}</span><span class="rqty">${item.qty}<span class="runit">${item.unit}</span></span>`;
         reportList.appendChild(row);
       });
     });
   }
-  document.getElementById('modalBg').style.display='flex';
+  document.getElementById('modalBg').style.display = 'flex';
 };
 
-document.getElementById('copyBtn').onclick=()=>{
-  const wasted=Object.entries(waste).filter(([,v])=>v>0).map(([id,qty])=>({...ITEMS.find(i=>i.id===id),qty}));
-  if(wasted.length===0)return;
-  let txt=`WASTE LOG — Coral Ridge Cinema 2225\n${dateStr()}\n${'─'.repeat(40)}\n`;
-  const byCat={};
-  wasted.forEach(i=>{if(!byCat[i.cat])byCat[i.cat]=[];byCat[i.cat].push(i);});
-  Object.entries(byCat).forEach(([cat,items])=>{
-    txt+=`\n[${cat}]\n`;
-    items.forEach(i=>{txt+=`  ${i.name}: ${i.qty} ${i.unit}\n`;});
+document.getElementById('copyBtn').onclick = () => {
+  const wasted = Object.entries(waste).filter(([,v]) => v > 0).map(([id,qty]) => ({...ITEMS.find(i => i.id===id), qty})).filter(i => i.name);
+  if (wasted.length === 0) return;
+  let txt = `WASTE LOG — Coral Ridge Cinema 2225\n${dateStr()}\n${'─'.repeat(40)}\n`;
+  const byCat = {};
+  wasted.forEach(i => { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
+  Object.entries(byCat).forEach(([cat, items]) => {
+    txt += `\n[${cat}]\n`;
+    items.forEach(i => { txt += `  ${i.name}: ${i.qty} ${i.unit}\n`; });
   });
-  txt+=`\nTotal units wasted: ${wasted.reduce((s,i)=>s+i.qty,0)}`;
-  const area=document.getElementById('copyArea');
-  area.textContent=txt;
-  area.style.display='block';
-  navigator.clipboard.writeText(txt).catch(()=>{});
-  const btn=document.getElementById('copyBtn');
-  btn.textContent='Copied!';
-  btn.classList.add('copied');
-  setTimeout(()=>{btn.textContent='Copy for Rosnet';btn.classList.remove('copied');},2000);
+  txt += `\nTotal units wasted: ${wasted.reduce((s,i) => s+i.qty, 0)}`;
+  const area = document.getElementById('copyArea');
+  area.textContent = txt;
+  area.style.display = 'block';
+  navigator.clipboard.writeText(txt).catch(() => {});
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = 'Copied!';
+  setTimeout(() => { copyBtn.textContent = 'Copy for Rosnet'; }, 2000);
 };
 
-document.getElementById('closeModal').onclick=()=>{
-  document.getElementById('modalBg').style.display='none';
+document.getElementById('closeModal').onclick = () => {
+  document.getElementById('modalBg').style.display = 'none';
 };
-
-render();
 </script>
 </body>
 </html>
