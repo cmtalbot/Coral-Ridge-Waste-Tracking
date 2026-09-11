@@ -52,10 +52,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .modal-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .copy-area{background:#f5f5f4;border-radius:8px;padding:12px;font-size:13px;font-family:monospace;white-space:pre-wrap;color:#1a1a19;margin-top:12px;line-height:1.6;max-height:200px;overflow-y:auto}
 .loading{text-align:center;padding:48px 16px;color:#6b6b68;font-size:14px}
-.reset-confirm{background:#fff;border-radius:16px 16px 0 0;padding:20px 20px 36px}
-.reset-confirm h2{font-size:17px;font-weight:600;margin-bottom:8px}
-.reset-confirm p{font-size:14px;color:#6b6b68;margin-bottom:16px}
-.btn-danger{padding:10px 20px;background:#A32D2D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
 </style>
 </head>
 <body>
@@ -93,11 +89,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBzCcM4XaV_F3NJ3wi04WDBx-3FH2iWDkI",
@@ -158,12 +152,12 @@ const ITEMS = [
   {id:'can10',name:'Juicefuls',cat:'Candy',unit:'Each'},
   {id:'can11',name:'Junior Mints',cat:'Candy',unit:'Each'},
   {id:'can12',name:'Lifesaver Gummies',cat:'Candy',unit:'Each'},
-  {id:'can13',name:"M&M Peanut",cat:'Candy',unit:'Each'},
-  {id:'can14',name:"M&M Plain",cat:'Candy',unit:'Each'},
+  {id:'can13',name:'M&M Peanut',cat:'Candy',unit:'Each'},
+  {id:'can14',name:'M&M Plain',cat:'Candy',unit:'Each'},
   {id:'can15',name:'Milk Duds',cat:'Candy',unit:'Each'},
   {id:'can16',name:'Nerd Gummi Cluster',cat:'Candy',unit:'Each'},
   {id:'can17',name:'Nerd Gummi Very Berry Cluster',cat:'Candy',unit:'Each'},
-  {id:'can18',name:"Reese's Peanut Butter Cups",cat:'Candy',unit:'Each'},
+  {id:'can18',name:'Reeses Peanut Butter Cups',cat:'Candy',unit:'Each'},
   {id:'can19',name:'Reeses Animal Dipped',cat:'Candy',unit:'Each'},
   {id:'can20',name:'Reeses Pieces',cat:'Candy',unit:'Each'},
   {id:'can21',name:'Skittles',cat:'Candy',unit:'Each'},
@@ -177,9 +171,9 @@ const ITEMS = [
   {id:'can29',name:'Twizzlers',cat:'Candy',unit:'Each'},
   {id:'can30',name:'Cotton candy/sugar',cat:'Candy',unit:'Case'},
   {id:'can31',name:'Oreos Mini',cat:'Candy',unit:'Each'},
-  {id:'can32',name:"Welch's Fruit Bag 0.9oz",cat:'Candy',unit:'Each'},
-  {id:'can33',name:"Welch's Fruit Peg 5oz",cat:'Candy',unit:'Each'},
-  {id:'can34',name:"M&M Peanut Butter",cat:'Candy',unit:'Each'},
+  {id:'can32',name:'Welchs Fruit Bag 0.9oz',cat:'Candy',unit:'Each'},
+  {id:'can33',name:'Welchs Fruit Peg 5oz',cat:'Candy',unit:'Each'},
+  {id:'can34',name:'M&M Peanut Butter',cat:'Candy',unit:'Each'},
   {id:'icee1',name:'ICEE/FCB syrup (all flavors)',cat:'ICEE',unit:'3 Gal'},
   {id:'iceepk1',name:'Cup 24oz Marcus ICEE FCB',cat:'ICEE',unit:'Each'},
   {id:'iceepk2',name:'Cup 32oz Marcus ICEE FCB',cat:'ICEE',unit:'Each'},
@@ -216,12 +210,27 @@ const ITEMS = [
   {id:'w3',name:'LifeWtr',cat:'Drinks',unit:'Bottle'},
   {id:'w4',name:'Bubly',cat:'Drinks',unit:'Can'},
   {id:'w5',name:'Poppi',cat:'Drinks',unit:'Can'},
+  {id:'g1',name:'Gatorade',cat:'Drinks',unit:'Bottle'},
   {id:'coffee1',name:'K-Cup coffee',cat:'Coffee',unit:'Each'},
   {id:'coffee2',name:'K-Cup coffee decaf',cat:'Coffee',unit:'Each'},
   {id:'coffpk1',name:'Cup 12oz hot',cat:'Coffee',unit:'Each'},
-  {id:'g1',name:'Gatorade',cat:'Drinks',unit:'Bottle'},
+  {id:'merch1',name:'Movie blanket',cat:'Merchandise',unit:'Each'},
+  {id:'merch2',name:'Mando bottle 32oz',cat:'Merchandise',unit:'Each'},
+  {id:'merch3',name:'MG water bottle',cat:'Merchandise',unit:'Each'},
+  {id:'merch4',name:'MOTU Gripper cup',cat:'Merchandise',unit:'Each'},
+  {id:'merch5',name:'MOTU Sword cup',cat:'Merchandise',unit:'Each'},
+  {id:'merch6',name:'Minions plush',cat:'Merchandise',unit:'Each'},
+  {id:'merch7',name:'Poppy plush',cat:'Merchandise',unit:'Each'},
+  {id:'merch8',name:'Battle Cat bag tag',cat:'Merchandise',unit:'Each'},
+  {id:'merch9',name:'AT-AT bucket',cat:'Merchandise',unit:'Each'},
+  {id:'merch10',name:'Grogu tin',cat:'Merchandise',unit:'Each'},
+  {id:'merch11',name:'MG tin 230oz',cat:'Merchandise',unit:'Each'},
+  {id:'merch12',name:'Minions 130oz tin',cat:'Merchandise',unit:'Each'},
+  {id:'merch13',name:'SG silhouette vessel',cat:'Merchandise',unit:'Each'},
+  {id:'merch14',name:'Top Gun helmet',cat:'Merchandise',unit:'Each'},
+  {id:'merch15',name:'MOTU Castle Grayskull',cat:'Merchandise',unit:'Each'}
 ];
-  
+
 const cats = ['All', ...new Set(ITEMS.map(i => i.cat))];
 let waste = {};
 let activeCategory = 'All';
@@ -241,7 +250,7 @@ function businessDay() {
 
 function todayKey() {
   const d = businessDay();
-  return `waste_${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}_${String(d.getDate()).padStart(2,'0')}`;
+  return 'waste_' + d.getFullYear() + '_' + String(d.getMonth()+1).padStart(2,'0') + '_' + String(d.getDate()).padStart(2,'0');
 }
 
 function dateStr() {
@@ -304,17 +313,17 @@ function render() {
     const qty = waste[item.id] || 0;
     const row = document.createElement('div');
     row.className = 'item-row' + (qty > 0 ? ' has-waste' : '');
-    row.innerHTML = `
-      <div style="flex:1;min-width:0">
-        <div class="item-name">${item.name}</div>
-        <div class="item-cat">${item.cat}</div>
-      </div>
-      <div class="qty-ctrl">
-        <button class="qty-btn" data-id="${item.id}" data-dir="-1">−</button>
-        <div class="qty-val">${qty}</div>
-        <button class="qty-btn" data-id="${item.id}" data-dir="1">+</button>
-        <div class="qty-unit">${item.unit}</div>
-      </div>`;
+    row.innerHTML =
+      '<div style="flex:1;min-width:0">' +
+        '<div class="item-name">' + item.name + '</div>' +
+        '<div class="item-cat">' + item.cat + '</div>' +
+      '</div>' +
+      '<div class="qty-ctrl">' +
+        '<button class="qty-btn" data-id="' + item.id + '" data-dir="-1">&#8722;</button>' +
+        '<div class="qty-val">' + qty + '</div>' +
+        '<button class="qty-btn" data-id="' + item.id + '" data-dir="1">+</button>' +
+        '<div class="qty-unit">' + item.unit + '</div>' +
+      '</div>';
     list.appendChild(row);
   });
   updateSummary();
@@ -333,34 +342,36 @@ document.getElementById('itemsList').addEventListener('click', e => {
 });
 
 function updateSummary() {
-  const w = Object.entries(waste).filter(([,v]) => v > 0);
+  const w = Object.entries(waste).filter(function(e) { return e[1] > 0; });
   document.getElementById('itemCount').textContent = w.length;
-  document.getElementById('unitCount').textContent = w.reduce((s,[,v]) => s+v, 0);
+  document.getElementById('unitCount').textContent = w.reduce(function(s,e) { return s+e[1]; }, 0);
 }
 
-
-
 document.getElementById('reportBtn').onclick = () => {
-  const wasted = Object.entries(waste).filter(([,v]) => v > 0).map(([id,qty]) => ({...ITEMS.find(i => i.id===id), qty})).filter(i => i.name);
+  const wasted = Object.entries(waste)
+    .filter(function(e) { return e[1] > 0; })
+    .map(function(e) { const item = ITEMS.find(function(i) { return i.id===e[0]; }); return Object.assign({}, item, {qty:e[1]}); })
+    .filter(function(i) { return i.name; });
   const reportList = document.getElementById('reportList');
   const copyArea = document.getElementById('copyArea');
   reportList.innerHTML = '';
   copyArea.style.display = 'none';
-  document.getElementById('reportSub').textContent = `${dateStr()} — ${wasted.length} item type(s) wasted`;
+  document.getElementById('reportSub').textContent = dateStr() + ' — ' + wasted.length + ' item type(s) wasted';
   if (wasted.length === 0) {
     reportList.innerHTML = '<div class="empty">No waste logged yet.</div>';
   } else {
     const byCat = {};
-    wasted.forEach(i => { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
-    Object.entries(byCat).forEach(([cat, items]) => {
+    wasted.forEach(function(i) { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
+    Object.entries(byCat).forEach(function(entry) {
+      const cat = entry[0]; const items = entry[1];
       const h = document.createElement('div');
       h.className = 'cat-label';
       h.textContent = cat;
       reportList.appendChild(h);
-      items.forEach(item => {
+      items.forEach(function(item) {
         const row = document.createElement('div');
         row.className = 'report-row';
-        row.innerHTML = `<span>${item.name}</span><span class="rqty">${item.qty}<span class="runit">${item.unit}</span></span>`;
+        row.innerHTML = '<span>' + item.name + '</span><span class="rqty">' + item.qty + '<span class="runit">' + item.unit + '</span></span>';
         reportList.appendChild(row);
       });
     });
@@ -369,23 +380,26 @@ document.getElementById('reportBtn').onclick = () => {
 };
 
 document.getElementById('copyBtn').onclick = () => {
-  const wasted = Object.entries(waste).filter(([,v]) => v > 0).map(([id,qty]) => ({...ITEMS.find(i => i.id===id), qty})).filter(i => i.name);
+  const wasted = Object.entries(waste)
+    .filter(function(e) { return e[1] > 0; })
+    .map(function(e) { const item = ITEMS.find(function(i) { return i.id===e[0]; }); return Object.assign({}, item, {qty:e[1]}); })
+    .filter(function(i) { return i.name; });
   if (wasted.length === 0) return;
-  let txt = `WASTE LOG — Coral Ridge Cinema 2225\n${dateStr()}\n${'─'.repeat(40)}\n`;
+  let txt = 'WASTE LOG — Coral Ridge Cinema 2225\n' + dateStr() + '\n' + '─'.repeat(40) + '\n';
   const byCat = {};
-  wasted.forEach(i => { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
-  Object.entries(byCat).forEach(([cat, items]) => {
-    txt += `\n[${cat}]\n`;
-    items.forEach(i => { txt += `  ${i.name}: ${i.qty} ${i.unit}\n`; });
+  wasted.forEach(function(i) { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
+  Object.entries(byCat).forEach(function(entry) {
+    txt += '\n[' + entry[0] + ']\n';
+    entry[1].forEach(function(i) { txt += '  ' + i.name + ': ' + i.qty + ' ' + i.unit + '\n'; });
   });
-  txt += `\nTotal units wasted: ${wasted.reduce((s,i) => s+i.qty, 0)}`;
+  txt += '\nTotal units wasted: ' + wasted.reduce(function(s,i) { return s+i.qty; }, 0);
   const area = document.getElementById('copyArea');
   area.textContent = txt;
   area.style.display = 'block';
-  navigator.clipboard.writeText(txt).catch(() => {});
+  navigator.clipboard.writeText(txt).catch(function() {});
   const copyBtn = document.getElementById('copyBtn');
   copyBtn.textContent = 'Copied!';
-  setTimeout(() => { copyBtn.textContent = 'Copy for Rosnet'; }, 2000);
+  setTimeout(function() { copyBtn.textContent = 'Copy for Rosnet'; }, 2000);
 };
 
 document.getElementById('closeModal').onclick = () => {
