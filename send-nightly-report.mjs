@@ -92,7 +92,7 @@ const ITEMS = [
   {id:'nacho1',name:'Tortilla chips',cat:'Nachos',unit:'Each'},
   {id:'nacho2',name:'Nacho cheese sauce',cat:'Nachos',unit:'140 oz'},
   {id:'nacho3',name:'Jalapeno peppers gallon',cat:'Nachos',unit:'Gallon'},
-  {id:'nacho4',name:'Plastic 4oz Nacho tray,cat:'Nachos',unit:'Tray'},
+  {id:'nacho4',name:'Plastic 4oz Nacho tray',cat:'Nachos',unit:'Tray'},
   {id:'pret1',name:'Pretzel Bites',cat:'Pretzels',unit:'Each'},
   {id:'pret2',name:'Butter Pretzel',cat:'Pretzels',unit:'Each'},
   {id:'ic1',name:'Haagen-Dazs Almond Crunch bar',cat:'Ice Cream',unit:'Each'},
