@@ -73,7 +73,7 @@ const ITEMS = [
   {id:'can34',name:'M&M Peanut Butter',cat:'Candy',unit:'Each'},
   {id:'icee1',name:'ICEE/FCB syrup (all flavors)',cat:'ICEE',unit:'3 Gal'},
   {id:'iceepk1',name:'ICEE 24oz Paper Cup',cat:'ICEE',unit:'Each'},
-  {id:'iceepk2',name:'ICEE 32oz Paper Cup,cat:'ICEE',unit:'Each'},
+  {id:'iceepk2',name:'ICEE 32oz Paper Cup',cat:'ICEE',unit:'Each'},
   {id:'ff1',name:'Brownie Bites',cat:'Food',unit:'Each'},
   {id:'ff2',name:'Doritos',cat:'Food',unit:'Each'},
   {id:'ff3',name:'Flamin Hot Cheetos',cat:'Food',unit:'Each'},
