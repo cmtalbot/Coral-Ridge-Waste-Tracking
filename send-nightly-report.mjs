@@ -2,8 +2,7 @@
 // and emails a formatted report via Resend. Run nightly by
 // .github/workflows/nightly-waste-report.yml
 //
-// Keep this ITEMS list in sync with the one in index.html if items are
-// ever added/renamed/removed there.
+// This ITEMS list must remain 1:1 with the list in index.html!
 const ITEMS = [
   {id:'beer1',name:'Blue Moon',cat:'Beer',unit:'Can'},
   {id:'beer2',name:'Bud Light',cat:'Beer',unit:'Can'},
@@ -150,9 +149,10 @@ function resolveReportDate(override) {
     const [y, m, d] = override.split('-').map(Number);
     return { year: y, month: m, day: d };
   }
-  // Mirrors the app's own "business day" cutoff: this script runs right
-  // after local midnight, which is when the day that just ended stops
-  // accepting new entries, so the report covers "yesterday".
+  
+  //This script runs right after local midnight, which is when the day that
+  //just ended stops accepting new entries, so the report covers "yesterday".
+  
   const { year, month, day } = chicagoNowParts();
   const todayUTC = Date.UTC(year, month - 1, day);
   const yesterday = new Date(todayUTC - 24 * 60 * 60 * 1000);
