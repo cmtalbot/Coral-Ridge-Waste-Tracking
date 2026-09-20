@@ -149,10 +149,11 @@ function resolveReportDate(override) {
     const [y, m, d] = override.split('-').map(Number);
     return { year: y, month: m, day: d };
   }
-  
-  //This script runs right after local midnight, which is when the day that
-  //just ended stops accepting new entries, so the report covers "yesterday".
-  
+
+  // This script runs shortly after local midnight (GitHub may start it a few
+  // hours late), when the day that just ended stops accepting new entries, so
+  // the report covers "yesterday" in Chicago time regardless of start delay.
+
   const { year, month, day } = chicagoNowParts();
   const todayUTC = Date.UTC(year, month - 1, day);
   const yesterday = new Date(todayUTC - 24 * 60 * 60 * 1000);
@@ -221,16 +222,6 @@ function renderHtml(dateLabel, report) {
 
 async function main() {
   const override = process.env.REPORT_DATE_OVERRIDE || undefined;
-
-  const { year, month, day } = resolveReportDate(override);
-
-  if (!isManual || !force) {
-    const { hour } = chicagoNowParts();
-    if (hour !== 0) {
-      console.log(`Skipping: it is currently hour ${hour} in ${TIME_ZONE}, not local midnight. (One of the two DST-covering cron runs is expected to no-op.)`);
-      return;
-    }
-  }
 
   const { year, month, day } = resolveReportDate(override);
   const dbKey = ymdToDbKey(year, month, day);
