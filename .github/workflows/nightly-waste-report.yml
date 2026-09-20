@@ -2,20 +2,14 @@ name: Nightly Waste Report
 
 on:
   schedule:
-    # GitHub Actions cron is UTC and doesn't shift for DST, so we run twice
-    # (once for CDT, once for CST) and let the script decide which run is
-    # actually local midnight in America/Chicago.
-    - cron: '5 5 * * *'  # 00:05 America/Chicago during CDT (UTC-5)
-    - cron: '5 6 * * *'  # 00:05 America/Chicago during CST (UTC-6)
+    # 06:05 UTC = 00:05 CST / 01:05 CDT, always after Chicago midnight.
+    # GitHub may start it late; the script reports "yesterday" in Chicago time either way.
+    - cron: '5 6 * * *'
   workflow_dispatch:
     inputs:
       date:
         description: 'Override report date (YYYY-MM-DD). Leave blank to use last night automatically.'
         required: false
-      force:
-        description: 'Send even if it is not currently ~midnight Chicago time'
-        type: boolean
-        default: true
 
 jobs:
   send-report:
@@ -33,5 +27,4 @@ jobs:
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           REPORT_DATE_OVERRIDE: ${{ github.event.inputs.date }}
-          FORCE_SEND: ${{ github.event.inputs.force }}
         run: node scripts/send-nightly-report.mjs
