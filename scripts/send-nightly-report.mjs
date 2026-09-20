@@ -220,9 +220,9 @@ function renderHtml(dateLabel, report) {
 }
 
 async function main() {
-  const isManual = process.env.REPORT_DATE_OVERRIDE !== undefined || process.env.FORCE_SEND !== undefined;
-  const force = process.env.FORCE_SEND === 'true';
   const override = process.env.REPORT_DATE_OVERRIDE || undefined;
+
+  const { year, month, day } = resolveReportDate(override);
 
   if (!isManual || !force) {
     const { hour } = chicagoNowParts();
