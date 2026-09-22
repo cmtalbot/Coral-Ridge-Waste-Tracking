@@ -50,7 +50,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .runit{font-size:12px;color:#6b6b68;margin-left:3px;font-weight:400}
 .empty{text-align:center;padding:32px 16px;color:#6b6b68;font-size:14px}
 .modal-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.copy-area{background:#f5f5f4;border-radius:8px;padding:12px;font-size:13px;font-family:monospace;white-space:pre-wrap;color:#1a1a19;margin-top:12px;line-height:1.6;max-height:200px;overflow-y:auto}
 .loading{text-align:center;padding:48px 16px;color:#6b6b68;font-size:14px}
 </style>
 </head>
@@ -81,9 +80,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <h2>Waste report</h2>
     <div class="sub" id="reportSub"></div>
     <div id="reportList"></div>
-    <div class="copy-area" id="copyArea" style="display:none"></div>
     <div class="modal-btns">
-      <button class="btn-primary" id="copyBtn">Copy for Rosnet</button>
       <button class="btn-ghost" id="closeModal">Close</button>
     </div>
   </div>
@@ -91,7 +88,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, update, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBzCcM4XaV_F3NJ3wi04WDBx-3FH2iWDkI",
@@ -244,6 +241,10 @@ function dateStr() {
 document.getElementById('dateLabel').textContent = dateStr();
 
 const dbRef = ref(db, todayKey());
+// Append-only audit trail: every +/- writes a permanent, timestamped entry
+// here (see database rules) so counts can be reconstructed if the day's
+// summary above is ever reset, accidentally or otherwise.
+const logRef = ref(db, 'waste_log/' + todayKey());
 
 onValue(dbRef, (snapshot) => {
   waste = snapshot.val() || {};
@@ -323,7 +324,10 @@ document.getElementById('itemsList').addEventListener('click', e => {
   setSyncStatus('syncing');
   const updateObj = {};
   updateObj[id] = newVal === 0 ? null : newVal;
-  update(dbRef, updateObj).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+  Promise.all([
+    update(dbRef, updateObj),
+    push(logRef, { itemId: id, delta: dir, newVal: newVal, ts: serverTimestamp() })
+  ]).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
 });
 
 function updateSummary() {
@@ -338,9 +342,7 @@ document.getElementById('reportBtn').onclick = () => {
     .map(function(e) { const item = ITEMS.find(function(i) { return i.id===e[0]; }); return Object.assign({}, item, {qty:e[1]}); })
     .filter(function(i) { return i.name; });
   const reportList = document.getElementById('reportList');
-  const copyArea = document.getElementById('copyArea');
   reportList.innerHTML = '';
-  copyArea.style.display = 'none';
   document.getElementById('reportSub').textContent = dateStr() + ' — ' + wasted.length + ' item type(s) wasted';
   if (wasted.length === 0) {
     reportList.innerHTML = '<div class="empty">No waste logged yet.</div>';
@@ -362,29 +364,6 @@ document.getElementById('reportBtn').onclick = () => {
     });
   }
   document.getElementById('modalBg').style.display = 'flex';
-};
-
-document.getElementById('copyBtn').onclick = () => {
-  const wasted = Object.entries(waste)
-    .filter(function(e) { return e[1] > 0; })
-    .map(function(e) { const item = ITEMS.find(function(i) { return i.id===e[0]; }); return Object.assign({}, item, {qty:e[1]}); })
-    .filter(function(i) { return i.name; });
-  if (wasted.length === 0) return;
-  let txt = 'WASTE LOG — Coral Ridge Cinema 2225\n' + dateStr() + '\n' + '─'.repeat(40) + '\n';
-  const byCat = {};
-  wasted.forEach(function(i) { if (!byCat[i.cat]) byCat[i.cat]=[]; byCat[i.cat].push(i); });
-  Object.entries(byCat).forEach(function(entry) {
-    txt += '\n[' + entry[0] + ']\n';
-    entry[1].forEach(function(i) { txt += '  ' + i.name + ': ' + i.qty + ' ' + i.unit + '\n'; });
-  });
-  txt += '\nTotal units wasted: ' + wasted.reduce(function(s,i) { return s+i.qty; }, 0);
-  const area = document.getElementById('copyArea');
-  area.textContent = txt;
-  area.style.display = 'block';
-  navigator.clipboard.writeText(txt).catch(function() {});
-  const copyBtn = document.getElementById('copyBtn');
-  copyBtn.textContent = 'Copied!';
-  setTimeout(function() { copyBtn.textContent = 'Copy for Rosnet'; }, 2000);
 };
 
 document.getElementById('closeModal').onclick = () => {
